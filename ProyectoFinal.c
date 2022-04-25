@@ -22,6 +22,7 @@ void PrintLBL(void);
 int FillInode (int Filesize, int TypeSelect);
 void createRootDirectory(void);
 void WriteInDirectory(int NumInode);
+void PrintDirectory(void);
 
 
 
@@ -75,7 +76,7 @@ int DirectoryFilePos[100];
 int CurrentDirectory = 0;
 int LastDirectory = 0;
 char CurrentFileName[10] = {0};
-int rootfilePos = 0;
+int rootfilePos[10] = {0};
 
 
 
@@ -114,6 +115,7 @@ CurrentLILpos = FillFreeInodeList();
 do{
 PrintLIL();
 PrintLBL();
+PrintDirectory();
 printf("\n\r");
 printf("Elige un numero\n\n1).-Crear carpeta\n2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir archivo\n5).-Salir\n");
 scanf("%i", &num);
@@ -153,17 +155,56 @@ printf("Hasta Pronto %s \n\n\n",username);
 return 0;
 }
 
+void PrintDirectory(void)
+{
+	/*Variable que usaremos para contar desde la posicion 0 del bloque hasta la maxima posicion gesitrada en Rootfilepos (variable que lleva la posicion de cada dirctorio)*/
+	int DirectoryStart = 0;
+	int Nameprint = 0;
+	printf("Te encuentras en: %i\n\r",CurrentDirectory);
+	printf("%i ", data[CurrentDirectory].ContenidoBloque[0]);
+	printf("%c \n\r", data[CurrentDirectory].ContenidoBloque[1]);
+	DirectoryStart++;
+	printf("%i ", data[CurrentDirectory].ContenidoBloque[100]);
+	printf("%c ", data[CurrentDirectory].ContenidoBloque[101]);
+	printf("%c \n\r", data[CurrentDirectory].ContenidoBloque[102]);
+	DirectoryStart++;
+	Nameprint = DirectoryStart*100;
+	do
+	{
+		/*Entra la primera vez y nameprint apunta a 200*/
+		if(Nameprint%100 == 0)
+		{
+			printf("%i ", data[CurrentDirectory].ContenidoBloque[Nameprint]);
+			Nameprint++;
+		}
+		else
+		{
+			if(data[CurrentDirectory].ContenidoBloque[Nameprint] != 0)
+			{
+				printf("%c", data[CurrentDirectory].ContenidoBloque[Nameprint]);
+				Nameprint++;
+			}
+			else
+			{
+				DirectoryStart++;
+				Nameprint = DirectoryStart*100;
+			}
+			
+		}
+		
+	}while( DirectoryStart <= rootfilePos[CurrentDirectory]  );
+}
 
 
 void createRootDirectory(void)
 {
 /*I am root*/
 data[0].ContenidoBloque[0] = 2;
-data[0].ContenidoBloque[1] = 46;
+data[0].ContenidoBloque[1] = '.';
 data[0].ContenidoBloque[100] = 2;
-data[0].ContenidoBloque[101] = 46;
-data[0].ContenidoBloque[102] = 46;
-rootfilePos = 2;
+data[0].ContenidoBloque[101] = '.';
+data[0].ContenidoBloque[102] = '.';
+rootfilePos[0] = 2;
 }
 
 
@@ -173,16 +214,22 @@ void WriteInDirectory(int NumInode)
 int copyCounter = 0;
 int fileNameCounter = 0;
 printf("Voy a Escribir en el directorio! \n\r");
-data[CurrentDirectory].ContenidoBloque[rootfilePos*100] = NumInode;
-/*for(copyCounter = ((rootfilePos*100)+1); CurrentFileName[fileNameCounter] != 0; copyCounter++)
+
+data[CurrentDirectory].ContenidoBloque[rootfilePos[CurrentDirectory]*100] = NumInode;
+copyCounter = ((rootfilePos[CurrentDirectory]*100) + 1);
+
+do
 {
+
 data[CurrentDirectory].ContenidoBloque[copyCounter] = CurrentFileName[fileNameCounter];
+printf("Este caracter estoy escribiendo en el dir: %c \n\r", data[CurrentDirectory].ContenidoBloque[copyCounter] );
 fileNameCounter++;
-printf("Caracter: %s", data[CurrentDirectory].ContenidoBloque[copyCounter]);
-}*/
+copyCounter++;
+
+}while(CurrentFileName[fileNameCounter] != 0);
 
 
-
+rootfilePos[CurrentDirectory]++;
 }
 
 
