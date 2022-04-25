@@ -19,7 +19,7 @@ int FillFreeInodeList (void);
 void NuevoArchivoTexto(void);
 int SizeofTheArray (char *Ptr);
 void PrintLIL (void );
-void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable, int TipoDeArchivo)
+void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable, int TipoDeArchivo);
 void PrintLBL(void);
 int FillInode (int Filesize, int TypeSelect);
 void createRootDirectory(void);
@@ -119,16 +119,19 @@ PrintDirectory();
 printf("\n\r");
 printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir archivo\n5).-Salir\n");
 scanf("%i", &num);
+if(num < 10)
+{
 switch(num)
 {
 case 1: //si has elegido el 1 se creara un nuevo directorio
 CreateNewDir();
-
+printf("\n\r \n\r");
 
 break;
 case 2://si has elegido el 2
 //Crea un nuevo archivo con permisos de escritura
 NuevoArchivoTexto();
+printf("\n\r \n\r");
 
 //system("clear");
 printf("Se creo el archivo! \n\r");
@@ -144,8 +147,16 @@ case 4://si has elegido el 4
 
 break;
 default:
-printf("Hasta Pronto %s \n\n\n",username);
+{
+	printf("Hasta Pronto %s \n\n\n",username);
+	break;
+}
 
+}
+}
+else
+{
+	num = 5;
 }
 }while(num!=5);
 
@@ -202,7 +213,6 @@ void CreateNewDir(void)
 	scanf("%s", CurrentFileName);
 	InodeUsed = FillInode ((int)1, Directory);
 	WriteInDirectory(InodeUsed);
-	//AsignarBloquesLibres(0, "'0", 0, (int)Directory)
 }
 
 void createRootDirectory(void)
@@ -231,7 +241,7 @@ do
 {
 
 data[CurrentDirectory].ContenidoBloque[copyCounter] = CurrentFileName[fileNameCounter];
-printf("Este caracter estoy escribiendo en el dir: %c \n\r", data[CurrentDirectory].ContenidoBloque[copyCounter] );
+//printf("Este caracter estoy escribiendo en el dir: %c \n\r", data[CurrentDirectory].ContenidoBloque[copyCounter] );
 fileNameCounter++;
 copyCounter++;
 
@@ -359,19 +369,15 @@ if(TipoDeArchivo == TextFile)
 }
 else
 {
-	/*if(TipoDeArchivo == Directory)
+	if(TipoDeArchivo == Directory)
 	{
 		if(CurrentDirectory == 0)
 		{
 			data[LBL[CurrentLBLPos]].ContenidoBloque[0] = 2;
-			LBL[CurrentLBLPos] = 0;
-			CurrentLBLPos--;
 		}
 		else
 		{
-			data[LBL[CurrentLBLPos]].ContenidoBloque[0] = ;
-			LBL[CurrentLBLPos] = 0;
-			CurrentLBLPos--;
+			data[LBL[CurrentLBLPos]].ContenidoBloque[0] = 5;	
 		}
 		data[LBL[CurrentLBLPos]].ContenidoBloque[1] = '.';
 		data[LBL[CurrentLBLPos]].ContenidoBloque[100] = 2;
@@ -379,7 +385,11 @@ else
 		data[LBL[CurrentLBLPos]].ContenidoBloque[102] = '.';
 		rootfilePos[LBL[CurrentLBLPos]] = 2;
 		
-	}*/
+		/*Quemar el bloque libre*/
+		LBL[CurrentLBLPos] = 0;
+			CurrentLBLPos--;
+		
+	}
 }
 
 }
