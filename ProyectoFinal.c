@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define TextFile 0
+#define Directory 1
 
 
 /* Define funtions*/
@@ -17,15 +19,13 @@ int FillFreeInodeList (void);
 void NuevoArchivoTexto(void);
 int SizeofTheArray (char *Ptr);
 void PrintLIL (void );
-void AsignarBloquesLibres(int NumBloques, char Textoescrito[], int TamanoVariable);
+void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable, int TipoDeArchivo)
 void PrintLBL(void);
 int FillInode (int Filesize, int TypeSelect);
 void createRootDirectory(void);
 void WriteInDirectory(int NumInode);
 void PrintDirectory(void);
-
-
-
+void CreateNewDir(void);
 
 struct inode{
 int size; //4
@@ -76,7 +76,7 @@ int DirectoryFilePos[100];
 int CurrentDirectory = 0;
 int LastDirectory = 0;
 char CurrentFileName[10] = {0};
-int rootfilePos[10] = {0};
+int rootfilePos[20] = {0};
 
 
 
@@ -117,13 +117,12 @@ PrintLIL();
 PrintLBL();
 PrintDirectory();
 printf("\n\r");
-printf("Elige un numero\n\n1).-Crear carpeta\n2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir archivo\n5).-Salir\n");
+printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir archivo\n5).-Salir\n");
 scanf("%i", &num);
 switch(num)
 {
-case 1: //si has elegido el 1
-printf("Digita el nombre de la carpeta:\n");
-
+case 1: //si has elegido el 1 se creara un nuevo directorio
+CreateNewDir();
 
 
 break;
@@ -160,7 +159,7 @@ void PrintDirectory(void)
 	/*Variable que usaremos para contar desde la posicion 0 del bloque hasta la maxima posicion gesitrada en Rootfilepos (variable que lleva la posicion de cada dirctorio)*/
 	int DirectoryStart = 0;
 	int Nameprint = 0;
-	printf("Te encuentras en: %i\n\r",CurrentDirectory);
+	//printf("Te encuentras en: %i\n\r",CurrentDirectory);
 	printf("%i ", data[CurrentDirectory].ContenidoBloque[0]);
 	printf("%c \n\r", data[CurrentDirectory].ContenidoBloque[1]);
 	DirectoryStart++;
@@ -186,6 +185,7 @@ void PrintDirectory(void)
 			}
 			else
 			{
+				printf("\n\r");
 				DirectoryStart++;
 				Nameprint = DirectoryStart*100;
 			}
@@ -195,6 +195,15 @@ void PrintDirectory(void)
 	}while( DirectoryStart <= rootfilePos[CurrentDirectory]  );
 }
 
+void CreateNewDir(void)
+{
+	int InodeUsed = 0;
+	printf("Ingresa el nombre del nuevo directorio \n\r");
+	scanf("%s", CurrentFileName);
+	InodeUsed = FillInode ((int)1, Directory);
+	WriteInDirectory(InodeUsed);
+	//AsignarBloquesLibres(0, "'0", 0, (int)Directory)
+}
 
 void createRootDirectory(void)
 {
@@ -252,8 +261,8 @@ printf(" Voy a necesitar %i bloques para este archivo \n\r", (int)NumeroDeBloque
 printf("Ingresa el nombre del archivo \n\r");
 scanf("%s", CurrentFileName);
 
-AsignarBloquesLibres(NumeroDeBloquesANecesitar, Textoescrito, TamanoVariable);
-InodeUsed = FillInode (NumeroDeBloquesANecesitar, 0);
+AsignarBloquesLibres(NumeroDeBloquesANecesitar, Textoescrito, TamanoVariable, TextFile);
+InodeUsed = FillInode (NumeroDeBloquesANecesitar, TextFile);
 WriteInDirectory(InodeUsed);
 
 
@@ -296,23 +305,24 @@ strcpy(inodeList[0][LIL[CurrentLILpos]].duenio, username);
 
 //inodeList[0][LIL[CurrentLILpos]].TablaContenidos;
 
-InodeUsed = LIL[CurrentLILpos];
-LIL[CurrentLILpos] = 0;
-CurrentLILpos--;
-
 printf("Inodo: %i \n\r", LIL[CurrentLILpos]);
 
 printf("Tamano: %i \n\r", inodeList[0][LIL[CurrentLILpos]].size);
 printf("Permisos: %s \n\r", inodeList[0][LIL[CurrentLILpos]].permisos);
-printf("Tipo: %i \n\r", inodeList[0][LIL[CurrentLILpos]].TipodeArchivo);
+printf("Tipo: %c \n\r", inodeList[0][LIL[CurrentLILpos]].TipodeArchivo);
 printf("Dueno: %s \n\r", inodeList[0][LIL[CurrentLILpos]].duenio);
+
+InodeUsed = LIL[CurrentLILpos];
+LIL[CurrentLILpos] = 0;
+CurrentLILpos--;
+
 return InodeUsed;
 }
 
 
 
 
-void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable)
+void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable, int TipoDeArchivo)
 {
 int WriteOnBlock;
 int CharTrans;
@@ -320,30 +330,58 @@ int SecondCharTrans;
 //printf("Este es tu texto: %s \n\r", Textoescrito);
 //printf("", LBL[CurrentLBLPos]);
 //printf("Estos son los bloques que se usaron %i \n\r", LBL[CurrentLBLPos-WriteOnBlock]);
-BlocksUsed[0]=LBL[CurrentLBLPos-WriteOnBlock];
-for(WriteOnBlock = 0; WriteOnBlock < NumBloques; WriteOnBlock++)
+if(TipoDeArchivo == TextFile)
 {
-BlocksUsed[WriteOnBlock]=LBL[CurrentLBLPos-WriteOnBlock];
+	BlocksUsed[0]=LBL[CurrentLBLPos-WriteOnBlock];
+	for(WriteOnBlock = 0; WriteOnBlock < NumBloques; WriteOnBlock++)
+	{
+	BlocksUsed[WriteOnBlock]=LBL[CurrentLBLPos-WriteOnBlock];
 
-/*Quemar un bloque libre*/
-LBL[CurrentLBLPos-WriteOnBlock] = 0;
-do
-{
-if(TamanoVariable < SecondCharTrans)
-{
-/*Out of the do-while*/
-CharTrans = 2000;
-}
-data[LBL[CurrentLBLPos-WriteOnBlock]].ContenidoBloque[CharTrans] = Textoescrito[SecondCharTrans];
-CharTrans++;
-SecondCharTrans++;
-}while(CharTrans<=1024);
-CharTrans = 0;
+	/*Quemar un bloque libre*/
+	LBL[CurrentLBLPos-WriteOnBlock] = 0;
+	do
+	{
+	if(TamanoVariable < SecondCharTrans)
+	{
+	/*Out of the do-while*/
+	CharTrans = 2000;
+	}
+	data[LBL[CurrentLBLPos-WriteOnBlock]].ContenidoBloque[CharTrans] = Textoescrito[SecondCharTrans];
+	CharTrans++;
+	SecondCharTrans++;
+	}while(CharTrans<=1024);
+	CharTrans = 0;
 
-printf("Estos son los bloques que se usaron %i \n\r", BlocksUsed[WriteOnBlock]);
+	printf("Estos son los bloques que se usaron %i \n\r", BlocksUsed[WriteOnBlock]);
+	}
+	/*Ajustar el indice de la lista de bloques libres*/
+	CurrentLBLPos = CurrentLBLPos- (WriteOnBlock);
 }
-/*Ajustar el indice de la lista de bloques libres*/
-CurrentLBLPos = CurrentLBLPos- (WriteOnBlock);
+else
+{
+	/*if(TipoDeArchivo == Directory)
+	{
+		if(CurrentDirectory == 0)
+		{
+			data[LBL[CurrentLBLPos]].ContenidoBloque[0] = 2;
+			LBL[CurrentLBLPos] = 0;
+			CurrentLBLPos--;
+		}
+		else
+		{
+			data[LBL[CurrentLBLPos]].ContenidoBloque[0] = ;
+			LBL[CurrentLBLPos] = 0;
+			CurrentLBLPos--;
+		}
+		data[LBL[CurrentLBLPos]].ContenidoBloque[1] = '.';
+		data[LBL[CurrentLBLPos]].ContenidoBloque[100] = 2;
+		data[LBL[CurrentLBLPos]].ContenidoBloque[101] = '.';
+		data[LBL[CurrentLBLPos]].ContenidoBloque[102] = '.';
+		rootfilePos[LBL[CurrentLBLPos]] = 2;
+		
+	}*/
+}
+
 }
 
 
