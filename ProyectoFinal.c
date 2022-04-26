@@ -26,6 +26,7 @@ void createRootDirectory(void);
 void WriteInDirectory(int NumInode);
 void PrintDirectory(void);
 void CreateNewDir(void);
+void BuscarArchivoAEliminar(void);
 
 struct inode{
 int size; //4
@@ -137,12 +138,12 @@ printf("\n\r \n\r");
 printf("Se creo el archivo! \n\r");
 break;
 case 3: //si has elegido el 3
-
+/*Eliminar archivo*/
+BuscarArchivoAEliminar();
 
 break;
 case 4://si has elegido el 4
 //abre un nuevo archivo con permisos de escritura
-
 
 
 break;
@@ -163,6 +164,58 @@ else
 //close(fd);
 
 return 0;
+}
+
+void BuscarArchivoAEliminar(void)
+{
+	int ContadorNombreDelArchivo = 2;
+	int Coincidencias = 0;
+	int Coincidencias2 = 1;
+	int TamanoDePalabraABuscar;
+	int Eliminar = 0;
+	int PosicionDeCoinicidencias;
+	
+	printf("Que archivo quieres eliminar? \n\r");
+	scanf("%s", CurrentFileName);
+	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
+	printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
+	do
+	{
+		//printf("HOLA SI LLEGO AL DO \n\r");
+		/*Revisar que si estamos leyendo un caracter y no un 0*/
+		if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] != 0)
+		{
+			//printf(" Esta es la letra que estoy buscando: %c \n\r", CurrentFileName[Coincidencias]);
+			//printf("Y esta este es el objetivo: %c \n\r ",data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2]);
+			//printf("Estoy apuntando a:  %i  \n\r ", (ContadorNombreDelArchivo*100)+Coincidencias2);
+			if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] == CurrentFileName[Coincidencias])
+			{
+				Coincidencias++;
+				Coincidencias2++;
+				PosicionDeCoinicidencias = ContadorNombreDelArchivo;
+			}
+			else
+			{
+				ContadorNombreDelArchivo++;
+			}
+		}
+		else
+		{
+			/*Final del directorio*/
+			ContadorNombreDelArchivo = 11;
+		}
+	}while(ContadorNombreDelArchivo <= 10);
+	printf("Coincidio %i veces! \n\r",Coincidencias);
+	if( TamanoDePalabraABuscar == Coincidencias)
+	{
+		for(Eliminar = PosicionDeCoinicidencias*100;Eliminar < ((PosicionDeCoinicidencias*100)+Coincidencias2); Eliminar++)
+		{
+			//printf("Voy a eliminar la posicion: %i \n\r", Eliminar);
+			data[CurrentDirectory].ContenidoBloque[Eliminar] = 0;
+			
+		}
+	}
+	
 }
 
 void PrintDirectory(void)
