@@ -28,6 +28,7 @@ void PrintDirectory(void);
 void CreateNewDir(void);
 void BuscarArchivoAEliminar(void);
 void LimpiarInodo(int InodoALimpiar);
+void IrAdirectorio(void);
 
 struct inode{
 int size; //4
@@ -145,6 +146,7 @@ BuscarArchivoAEliminar();
 
 break;
 case 4://si has elegido el 4
+
 //abre un nuevo archivo con permisos de escritura
 
 
@@ -168,14 +170,75 @@ else
 return 0;
 }
 
+void IrAdirectorio(void)
+{
+	int ContadorNombreDelArchivo = 2;
+	int Coincidencias = 0;
+	int Coincidencias2 = 1;
+	int TamanoDePalabraABuscar;
+	int Eliminar = 0;
+	int PosicionDeCoinicidencias;
+	int InodoALimpiar;
+	
+	printf("Que directorio quieres ir? \n\r");
+	scanf("%s", CurrentFileName);
+	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
+	printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
+	do
+	{
+		/*Revisar que si estamos leyendo un caracter y no un 0*/
+		if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] != 0)
+		{
+			//printf(" Esta es la letra que estoy buscando: %c \n\r", CurrentFileName[Coincidencias]);
+			//printf("Y esta este es el objetivo: %c \n\r ",data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2]);
+			//printf("Estoy apuntando a:  %i  \n\r ", (ContadorNombreDelArchivo*100)+Coincidencias2);
+			if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] == CurrentFileName[Coincidencias])
+			{
+				Coincidencias++;
+				Coincidencias2++;
+				PosicionDeCoinicidencias = ContadorNombreDelArchivo;
+			}
+			else
+			{
+				ContadorNombreDelArchivo++;
+			}
+		}
+		else
+		{
+			/*Final del directorio*/
+			ContadorNombreDelArchivo = 11;
+		}
+	}while(ContadorNombreDelArchivo <= 10);
+	printf("Coincidio %i veces! \n\r",Coincidencias);
+	if( TamanoDePalabraABuscar == Coincidencias)
+	{
+		InodoALimpiar = data[CurrentDirectory].ContenidoBloque[PosicionDeCoinicidencias*100];
+		for(Eliminar = PosicionDeCoinicidencias*100;Eliminar < ((PosicionDeCoinicidencias*100)+Coincidencias2); Eliminar++)
+		{
+			//printf("Voy a eliminar la posicion: %i \n\r", Eliminar);
+			data[CurrentDirectory].ContenidoBloque[Eliminar] = 0;
+		}
+		LimpiarInodo(InodoALimpiar);
+	}
+}
+
 void LimpiarInodo(int InodoALimpiar)
 {
+	int RecargarBloques;
 	CurrentLILpos++;
+	
 	/* Regresar el inodo a la lista de inodos libres*/
 	LIL[CurrentLILpos] = InodoALimpiar;
 	
-	inodeList[0][LIL[CurrentLILpos]].size = 0;
+	/*Recargar los bloques a la lista de bloques libres */
+	for(RecargarBloques = inodeList[0][LIL[CurrentLILpos]].size; RecargarBloques != 0; RecargarBloques--)
+	{
+		CurrentLBLPos++;
+		LBL[CurrentLBLPos] = inodeList[0][LIL[CurrentLILpos]].TablaContenidos[RecargarBloques-1];
+	}
 	
+	/*Marcar el inodo como libre poniendo su tamaño como 0*/
+	inodeList[0][LIL[CurrentLILpos]].size = 0;
 	
 }
 
@@ -330,7 +393,7 @@ int InodeUsed;
 printf("Ingresa el texto que quieres que contenga el archivo \n\r");
 scanf("%s", Textoescrito);
 //gets(Textoescrito);
-TamanoVariable = SizeofTheArray(&Textoescrito);
+TamanoVariable = SizeofTheArray(Textoescrito);
 printf("Este es tu texto: %s y el tamaño es: %i \n\r", Textoescrito, TamanoVariable);
 NumeroDeBloquesANecesitar = (((float)TamanoVariable)/1024)+1;
 printf(" Voy a necesitar %i bloques para este archivo \n\r", (int)NumeroDeBloquesANecesitar);
