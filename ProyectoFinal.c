@@ -27,6 +27,7 @@ void WriteInDirectory(int NumInode);
 void PrintDirectory(void);
 void CreateNewDir(void);
 void BuscarArchivoAEliminar(void);
+void LimpiarInodo(int InodoALimpiar);
 
 struct inode{
 int size; //4
@@ -137,6 +138,7 @@ printf("\n\r \n\r");
 //system("clear");
 printf("Se creo el archivo! \n\r");
 break;
+
 case 3: //si has elegido el 3
 /*Eliminar archivo*/
 BuscarArchivoAEliminar();
@@ -166,6 +168,17 @@ else
 return 0;
 }
 
+void LimpiarInodo(int InodoALimpiar)
+{
+	CurrentLILpos++;
+	/* Regresar el inodo a la lista de inodos libres*/
+	LIL[CurrentLILpos] = InodoALimpiar;
+	
+	inodeList[0][LIL[CurrentLILpos]].size = 0;
+	
+	
+}
+
 void BuscarArchivoAEliminar(void)
 {
 	int ContadorNombreDelArchivo = 2;
@@ -174,6 +187,7 @@ void BuscarArchivoAEliminar(void)
 	int TamanoDePalabraABuscar;
 	int Eliminar = 0;
 	int PosicionDeCoinicidencias;
+	int InodoALimpiar;
 	
 	printf("Que archivo quieres eliminar? \n\r");
 	scanf("%s", CurrentFileName);
@@ -181,7 +195,6 @@ void BuscarArchivoAEliminar(void)
 	printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
 	do
 	{
-		//printf("HOLA SI LLEGO AL DO \n\r");
 		/*Revisar que si estamos leyendo un caracter y no un 0*/
 		if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] != 0)
 		{
@@ -208,12 +221,13 @@ void BuscarArchivoAEliminar(void)
 	printf("Coincidio %i veces! \n\r",Coincidencias);
 	if( TamanoDePalabraABuscar == Coincidencias)
 	{
+		InodoALimpiar = data[CurrentDirectory].ContenidoBloque[PosicionDeCoinicidencias*100];
 		for(Eliminar = PosicionDeCoinicidencias*100;Eliminar < ((PosicionDeCoinicidencias*100)+Coincidencias2); Eliminar++)
 		{
 			//printf("Voy a eliminar la posicion: %i \n\r", Eliminar);
 			data[CurrentDirectory].ContenidoBloque[Eliminar] = 0;
-			
 		}
+		LimpiarInodo(InodoALimpiar);
 	}
 	
 }
@@ -534,14 +548,10 @@ LILpos = 9;
 return LILpos;
 }
 
-
-
 void WriteTheInode (void)
 {
-
+	
 }
-
-
 
 void PrintLIL (void )
 {
@@ -553,8 +563,6 @@ printf("Position %i: %i ", Counter ,LIL[Counter]);
 }
 printf("\n\r");
 }
-
-
 
 void PrintLBL (void )
 {
