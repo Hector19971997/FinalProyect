@@ -77,9 +77,11 @@ char username[10];
 int num;
 int DirectoryFilePos[100];
 int CurrentDirectory = 0;
+int PrevDirectory = 0;
 int LastDirectory = 0;
 char CurrentFileName[10] = {0};
 int rootfilePos[20] = {0};
+
 
 
 
@@ -120,37 +122,52 @@ PrintLIL();
 PrintLBL();
 PrintDirectory();
 printf("\n\r");
-printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir archivo\n5).-Salir\n");
+printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir directorio\n  5).-DirectorioAnterior \n  6).-Salir\n");
 scanf("%i", &num);
 if(num < 10)
 {
 switch(num)
 {
 case 1: //si has elegido el 1 se creara un nuevo directorio
+{
 CreateNewDir();
 printf("\n\r \n\r");
-
+system("clear");
 break;
+}
+
 case 2://si has elegido el 2
+{
 //Crea un nuevo archivo con permisos de escritura
 NuevoArchivoTexto();
 printf("\n\r \n\r");
 
-//system("clear");
+system("clear");
 printf("Se creo el archivo! \n\r");
 break;
+}
 
 case 3: //si has elegido el 3
+{
 /*Eliminar archivo*/
 BuscarArchivoAEliminar();
-
+system("clear");
 break;
+}
+
 case 4://si has elegido el 4
-
+{
+IrAdirectorio();
+system("clear");
 //abre un nuevo archivo con permisos de escritura
-
-
 break;
+}
+case 5:
+{
+CurrentDirectory = PrevDirectory;
+system("clear");
+break;
+}
 default:
 {
 	printf("Hasta Pronto %s \n\n\n",username);
@@ -161,9 +178,9 @@ default:
 }
 else
 {
-	num = 5;
+	num = 6;
 }
-}while(num!=5);
+}while(num!=6);
 
 //close(fd);
 
@@ -178,20 +195,17 @@ void IrAdirectorio(void)
 	int TamanoDePalabraABuscar;
 	int Eliminar = 0;
 	int PosicionDeCoinicidencias;
-	int InodoALimpiar;
+	int InodoDeDirectorio;
 	
 	printf("Que directorio quieres ir? \n\r");
 	scanf("%s", CurrentFileName);
 	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
-	printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
+	//printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
 	do
 	{
 		/*Revisar que si estamos leyendo un caracter y no un 0*/
 		if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] != 0)
 		{
-			//printf(" Esta es la letra que estoy buscando: %c \n\r", CurrentFileName[Coincidencias]);
-			//printf("Y esta este es el objetivo: %c \n\r ",data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2]);
-			//printf("Estoy apuntando a:  %i  \n\r ", (ContadorNombreDelArchivo*100)+Coincidencias2);
 			if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] == CurrentFileName[Coincidencias])
 			{
 				Coincidencias++;
@@ -209,16 +223,13 @@ void IrAdirectorio(void)
 			ContadorNombreDelArchivo = 11;
 		}
 	}while(ContadorNombreDelArchivo <= 10);
-	printf("Coincidio %i veces! \n\r",Coincidencias);
 	if( TamanoDePalabraABuscar == Coincidencias)
 	{
-		InodoALimpiar = data[CurrentDirectory].ContenidoBloque[PosicionDeCoinicidencias*100];
-		for(Eliminar = PosicionDeCoinicidencias*100;Eliminar < ((PosicionDeCoinicidencias*100)+Coincidencias2); Eliminar++)
-		{
-			//printf("Voy a eliminar la posicion: %i \n\r", Eliminar);
-			data[CurrentDirectory].ContenidoBloque[Eliminar] = 0;
-		}
-		LimpiarInodo(InodoALimpiar);
+		InodoDeDirectorio = data[CurrentDirectory].ContenidoBloque[PosicionDeCoinicidencias*100];
+		printf("Este inodo : %i \n\r",InodoDeDirectorio);
+		printf("Tenia este bloque: %i \n\r",inodeList[0][InodoDeDirectorio].TablaContenidos[0]);
+		PrevDirectory = CurrentDirectory;
+		CurrentDirectory = inodeList[0][InodoDeDirectorio].TablaContenidos[0];
 	}
 }
 
@@ -343,6 +354,7 @@ void CreateNewDir(void)
 	scanf("%s", CurrentFileName);
 	InodeUsed = FillInode ((int)1, Directory);
 	WriteInDirectory(InodeUsed);
+	AsignarBloquesLibres(0,0,0,Directory);
 }
 
 void createRootDirectory(void)
@@ -435,6 +447,9 @@ inodeList[0][LIL[CurrentLILpos]].TipodeArchivo = 't';
 else if(TypeSelect == 1)
 {
 inodeList[0][LIL[CurrentLILpos]].TipodeArchivo = 'd';
+inodeList[0][LIL[CurrentLILpos]].size  = 1;
+/*Solo se necesita un solo bloque para el inido*/
+inodeList[0][LIL[CurrentLILpos]].TablaContenidos[0] = LBL[CurrentLBLPos];
 }
 else
 {
