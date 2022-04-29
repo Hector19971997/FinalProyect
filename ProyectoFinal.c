@@ -28,6 +28,7 @@ void PrintDirectory(void);
 void CreateNewDir(void);
 void BuscarArchivoAEliminar(void);
 void LimpiarInodo(int InodoALimpiar);
+void IrAdirectorio(void);
 
 struct inode{
 int size; //4
@@ -76,9 +77,11 @@ char username[10];
 int num;
 int DirectoryFilePos[100];
 int CurrentDirectory = 0;
+int PrevDirectory = 0;
 int LastDirectory = 0;
 char CurrentFileName[10] = {0};
 int rootfilePos[20] = {0};
+
 
 
 
@@ -119,36 +122,52 @@ PrintLIL();
 PrintLBL();
 PrintDirectory();
 printf("\n\r");
-printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir archivo\n5).-Salir\n");
+printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir directorio\n  5).-DirectorioAnterior \n  6).-Salir\n");
 scanf("%i", &num);
 if(num < 10)
 {
 switch(num)
 {
 case 1: //si has elegido el 1 se creara un nuevo directorio
+{
 CreateNewDir();
 printf("\n\r \n\r");
-
+system("clear");
 break;
+}
+
 case 2://si has elegido el 2
+{
 //Crea un nuevo archivo con permisos de escritura
 NuevoArchivoTexto();
 printf("\n\r \n\r");
 
-//system("clear");
+system("clear");
 printf("Se creo el archivo! \n\r");
 break;
+}
 
 case 3: //si has elegido el 3
+{
 /*Eliminar archivo*/
 BuscarArchivoAEliminar();
-
+system("clear");
 break;
+}
+
 case 4://si has elegido el 4
+{
+IrAdirectorio();
+system("clear");
 //abre un nuevo archivo con permisos de escritura
-
-
 break;
+}
+case 5:
+{
+CurrentDirectory = PrevDirectory;
+system("clear");
+break;
+}
 default:
 {
 	printf("Hasta Pronto %s \n\n\n",username);
@@ -159,23 +178,78 @@ default:
 }
 else
 {
-	num = 5;
+	num = 6;
 }
-}while(num!=5);
+}while(num!=6);
 
 //close(fd);
 
 return 0;
 }
 
+void IrAdirectorio(void)
+{
+	int ContadorNombreDelArchivo = 2;
+	int Coincidencias = 0;
+	int Coincidencias2 = 1;
+	int TamanoDePalabraABuscar;
+	int Eliminar = 0;
+	int PosicionDeCoinicidencias;
+	int InodoDeDirectorio;
+	
+	printf("Que directorio quieres ir? \n\r");
+	scanf("%s", CurrentFileName);
+	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
+	//printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
+	do
+	{
+		/*Revisar que si estamos leyendo un caracter y no un 0*/
+		if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] != 0)
+		{
+			if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] == CurrentFileName[Coincidencias])
+			{
+				Coincidencias++;
+				Coincidencias2++;
+				PosicionDeCoinicidencias = ContadorNombreDelArchivo;
+			}
+			else
+			{
+				ContadorNombreDelArchivo++;
+			}
+		}
+		else
+		{
+			/*Final del directorio*/
+			ContadorNombreDelArchivo = 11;
+		}
+	}while(ContadorNombreDelArchivo <= 10);
+	if( TamanoDePalabraABuscar == Coincidencias)
+	{
+		InodoDeDirectorio = data[CurrentDirectory].ContenidoBloque[PosicionDeCoinicidencias*100];
+		printf("Este inodo : %i \n\r",InodoDeDirectorio);
+		printf("Tenia este bloque: %i \n\r",inodeList[0][InodoDeDirectorio].TablaContenidos[0]);
+		PrevDirectory = CurrentDirectory;
+		CurrentDirectory = inodeList[0][InodoDeDirectorio].TablaContenidos[0];
+	}
+}
+
 void LimpiarInodo(int InodoALimpiar)
 {
+	int RecargarBloques;
 	CurrentLILpos++;
+	
 	/* Regresar el inodo a la lista de inodos libres*/
 	LIL[CurrentLILpos] = InodoALimpiar;
 	
-	inodeList[0][LIL[CurrentLILpos]].size = 0;
+	/*Recargar los bloques a la lista de bloques libres */
+	for(RecargarBloques = inodeList[0][LIL[CurrentLILpos]].size; RecargarBloques != 0; RecargarBloques--)
+	{
+		CurrentLBLPos++;
+		LBL[CurrentLBLPos] = inodeList[0][LIL[CurrentLILpos]].TablaContenidos[RecargarBloques-1];
+	}
 	
+	/*Marcar el inodo como libre poniendo su tamaño como 0*/
+	inodeList[0][LIL[CurrentLILpos]].size = 0;
 	
 }
 
@@ -280,6 +354,7 @@ void CreateNewDir(void)
 	scanf("%s", CurrentFileName);
 	InodeUsed = FillInode ((int)1, Directory);
 	WriteInDirectory(InodeUsed);
+	AsignarBloquesLibres(0,0,0,Directory);
 }
 
 void createRootDirectory(void)
@@ -330,7 +405,7 @@ int InodeUsed;
 printf("Ingresa el texto que quieres que contenga el archivo \n\r");
 scanf("%s", Textoescrito);
 //gets(Textoescrito);
-TamanoVariable = SizeofTheArray(&Textoescrito);
+TamanoVariable = SizeofTheArray(Textoescrito);
 printf("Este es tu texto: %s y el tamaño es: %i \n\r", Textoescrito, TamanoVariable);
 NumeroDeBloquesANecesitar = (((float)TamanoVariable)/1024)+1;
 printf(" Voy a necesitar %i bloques para este archivo \n\r", (int)NumeroDeBloquesANecesitar);
@@ -372,6 +447,9 @@ inodeList[0][LIL[CurrentLILpos]].TipodeArchivo = 't';
 else if(TypeSelect == 1)
 {
 inodeList[0][LIL[CurrentLILpos]].TipodeArchivo = 'd';
+inodeList[0][LIL[CurrentLILpos]].size  = 1;
+/*Solo se necesita un solo bloque para el inido*/
+inodeList[0][LIL[CurrentLILpos]].TablaContenidos[0] = LBL[CurrentLBLPos];
 }
 else
 {
