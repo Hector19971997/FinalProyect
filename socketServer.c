@@ -61,8 +61,10 @@ C = accept( D, & Cliente, & longCli);
 if (C == -1) exit -1;
 
 read(C, Buff, sizeof(Buff));
-//system("clear");
-printf("Recibido: %s\n", Buff);
+system("clear");
+printf("%s\n", Buff);
+
+printf("Ingresa el usuario por favor");
 
 do
 {
@@ -71,20 +73,20 @@ do
 	
 	read(C, Buff, sizeof(Buff));
 	//system("clear");
-	printf("Recibido: %s\n", Buff);
+	//printf("%s\n", Buff);
 	}
 	else if(Buff[0] == EscribirAServidor)
 	{
-		NumeroDeVecesAEscribir = Buff[1];
-		do{
-		printf("Escribele compadre, puedes hacerlo %i", NumeroDeVecesAEscribir);
+		//NumeroDeVecesAEscribir = Buff[1];
+		//do{
+		//printf("Ingresa el usuario por favor %i", NumeroDeVecesAEscribir);
 		scanf("%s",Buff);
-		printf("Mandare: %s", Buff);
+		//printf("Mandare: %s", Buff);
 		write(C, Buff, sizeof(Buff));
+		Buff[0] = LeerServidor;
 		NumeroDeVecesAEscribir--;
-		}while(NumeroDeVecesAEscribir != 0);
-		
-
+		//}while(NumeroDeVecesAEscribir != 0);
+		Buff[0] = LeerServidor;
 	}
 	else if(Buff[0] == TerminarConexion)
 	{
@@ -95,6 +97,7 @@ do
 	{
 		read(C, Buff, sizeof(Buff));
 	}
+	printf("Lonix@Lonix-FS: ");
 	
 }while( Buff[0]!= 0xFF );
 
