@@ -12,6 +12,10 @@
 #define TextFile 0
 #define Directory 1
 
+#define LeerServidor 1
+#define EscribirAServidor 2
+#define TerminarConexion 3
+
 
 /* Define funtions*/
 void SearchCurrentInode(void);
@@ -82,9 +86,44 @@ int LastDirectory = 0;
 char CurrentFileName[10] = {0};
 int rootfilePos[20] = {0};
 
+/*Socket */
+int SD;
+struct sockaddr_in Dir;
+struct sockaddr Cliente;
+socklen_t longCli;
+struct hostent *Host;
+char Buff[2000]="--Conectado exitosamente a lonix";
 
 int main()
 {
+/* Iniciar la comunicacion tcp*/
+puts("Buscando al servidor");
+Host = gethostbyname("localhost");
+if(Host==NULL) exit(1);
+
+puts("inicializando datos");
+Dir.sin_family= AF_INET;
+Dir.sin_port = 5005;
+Dir.sin_addr.s_addr= ((struct in_addr *)(Host->h_addr))->s_addr;
+
+puts("Abriendo socket");
+SD=socket(AF_INET, SOCK_STREAM,0);
+
+puts("Conectando");
+if (connect(SD, (struct sockaddr *)&Dir, sizeof(Dir))==-1)
+{
+  close (SD);
+  perror("");
+  exit(1);
+}
+
+Buff[0] = EscribirAServidor;
+Buff[1] = 1; //Numero de veces que puede escribir el socket
+write(SD, Buff, sizeof(Buff));
+
+
+
+//close(SD);
 /**/
 //system("touch File");
 
@@ -108,9 +147,14 @@ write(fd,inodeList,sizeof(inodeList));
 write(fd,data,sizeof(data));*/
 createRootDirectory();
 system("clear");
-printf("Hola Cual es tu nombre\n");
-scanf("%s", username);
-printf("Bienvenido al sistema %s \n\n",username);
+memset(Buff,0, sizeof(Buff));
+printf("Hola Cual es tu nombre %i \n", Buff[0]);
+do{
+	read(SD, Buff, sizeof(Buff));
+}while(Buff[0] == 0);
+//scanf("%s", username);
+printf("Bienvenido al sistema %s \n\n",Buff);
+
 /*Llenar la lista de los inodos libres*/
 CurrentLILpos = FillFreeInodeList();
 
@@ -180,6 +224,7 @@ else
 }
 }while(num!=6);
 
+close(SD);
 //close(fd);
 
 return 0;
@@ -198,10 +243,10 @@ void IrAdirectorio(void)
 	printf("Que directorio quieres ir? \n\r");
 	scanf("%s", CurrentFileName);
 	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
-	//printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
+
 	do
 	{
-		/*Revisar que si estamos leyendo un caracter y no un 0*/
+		/*Revisar que si estamos leyendo un caracter y no un espacio vacio */
 		if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] != 0)
 		{
 			if(data[CurrentDirectory].ContenidoBloque[(ContadorNombreDelArchivo*100)+Coincidencias2] == CurrentFileName[Coincidencias])
