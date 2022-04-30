@@ -1,11 +1,23 @@
-# include < sys/socket.h >
- # include <sys/types.h> 
-# include <sys/un.h> 
-# include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h> 
+#include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <fcntl.h>
+
+#define LeerServidor 1
+#define EscribirAServidor 2
+#define TerminarConexion 3
+
+struct Datos{
+    char nombre[20];
+    int opc;
+    char Texto[3000];
+};
+
 int main()
 {
 
@@ -15,8 +27,13 @@ struct sockaddr Cliente;
 socklen_t longCli;
 int C;
 
-char Buff[100]="Mensaje del servidor por tcp";
+
+char Buff[2000];
 struct servent *Puerto;
+int NumeroDeVecesAEscribir = 0;
+
+struct Datos info;
+int fdr;
 
 puts("Creando socket");
 D= socket(AF_INET, SOCK_STREAM, 0);
@@ -44,10 +61,45 @@ C = accept( D, & Cliente, & longCli);
 if (C == -1) exit -1;
 
 read(C, Buff, sizeof(Buff));
-
+//system("clear");
 printf("Recibido: %s\n", Buff);
-strcpy(Buff,"Respuesta del servidor");
-write(C, Buff, sizeof(Buff));
+
+do
+{
+	if(Buff[0] == LeerServidor)
+	{
+	
+	read(C, Buff, sizeof(Buff));
+	//system("clear");
+	printf("Recibido: %s\n", Buff);
+	}
+	else if(Buff[0] == EscribirAServidor)
+	{
+		NumeroDeVecesAEscribir = Buff[1];
+		do{
+		printf("Escribele compadre, puedes hacerlo %i", NumeroDeVecesAEscribir);
+		scanf("%s",Buff);
+		printf("Mandare: %s", Buff);
+		write(C, Buff, sizeof(Buff));
+		NumeroDeVecesAEscribir--;
+		}while(NumeroDeVecesAEscribir != 0);
+		
+
+	}
+	else if(Buff[0] == TerminarConexion)
+	{
+		close (C);
+		Buff[0] = 0xFF;
+	}
+	else
+	{
+		read(C, Buff, sizeof(Buff));
+	}
+	
+}while( Buff[0]!= 0xFF );
+
+
+//write(C, Buff, sizeof(Buff));
 close (C);
 
 }
