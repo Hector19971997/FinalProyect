@@ -23,7 +23,7 @@ int FillFreeInodeList (void);
 void NuevoArchivoTexto(void);
 int SizeofTheArray (char *Ptr);
 void PrintLIL (void );
-void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable, int TipoDeArchivo);
+void AsignarBloquesLibres(int NumBloques, char Textoescrito[10000], int TamanoVariable, int TipoDeArchivo);
 void PrintLBL(void);
 int FillInode (int Filesize, int TypeSelect);
 void createRootDirectory(void);
@@ -33,6 +33,7 @@ void CreateNewDir(void);
 void BuscarArchivoAEliminar(void);
 void LimpiarInodo(int InodoALimpiar);
 void IrAdirectorio(void);
+void MandaRespuestaAServer(void);
 
 struct inode{
 int size; //4
@@ -149,24 +150,30 @@ createRootDirectory();
 system("clear");
 memset(Buff,0, sizeof(Buff));
 
-printf("Hola Cual es tu nombre %i \n", Buff[0]);
+//printf("Hola Cual es tu nombre \n");
 read(SD, Buff, sizeof(Buff));
 
 printf("Bienvenido al sistema %s \n\n",Buff);
-
+//stpcpy(Buff,username);
 /*Llenar la lista de los inodos libres*/
 CurrentLILpos = FillFreeInodeList();
 memset(Buff,0, sizeof(Buff));
+Buff[0] = EscribirAServidor;
 write(SD, Buff, sizeof(Buff));
 
 do{
+MandaRespuestaAServer();
 PrintLIL();
 PrintLBL();
 PrintDirectory();
 printf("\n\r");
 printf("Elige un numero\n\n1).-Crear directorio \n 2).-Crear un archivo\n3).-Eliminar archivo o carpeta\n4).-Abrir directorio\n  5).-DirectorioAnterior \n  6).-Salir\n");
-scanf("%i", &num);
-if(num < 10)
+//printf("Ingresa (mkdir) para crear un directorio \n\r Ingresa (touch) para crear un nuevo archivo \n\r Ingresa (rm) para eliminar archivo \n\r Ingresa (cd) para cambiar de directorio");
+Buff[0]  = 0x30;
+read(SD, Buff, sizeof(Buff));
+num = Buff[0] - 0x30;
+//scanf("%i", &num);
+if(num < 10 && num != 0)
 {
 switch(num)
 {
@@ -212,7 +219,9 @@ break;
 }
 default:
 {
+	
 	printf("Hasta Pronto %s \n\n\n",username);
+	//close(SD);
 	break;
 }
 
@@ -220,7 +229,8 @@ default:
 }
 else
 {
-	num = 6;
+	MandaRespuestaAServer();
+	//num = 6;
 }
 }while(num!=6);
 
@@ -228,6 +238,13 @@ close(SD);
 //close(fd);
 
 return 0;
+}
+
+void MandaRespuestaAServer(void)
+{
+	memset(Buff,0, sizeof(Buff));
+	Buff[0] = EscribirAServidor;
+	write(SD, Buff, sizeof(Buff));
 }
 
 void IrAdirectorio(void)
@@ -239,9 +256,10 @@ void IrAdirectorio(void)
 	int Eliminar = 0;
 	int PosicionDeCoinicidencias;
 	int InodoDeDirectorio;
-	
+	MandaRespuestaAServer();
 	printf("Que directorio quieres ir? \n\r");
-	scanf("%s", CurrentFileName);
+	read(SD, CurrentFileName, sizeof(CurrentFileName));
+	//scanf("%s", CurrentFileName);
 	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
 
 	do
@@ -306,8 +324,12 @@ void BuscarArchivoAEliminar(void)
 	int PosicionDeCoinicidencias;
 	int InodoALimpiar;
 	
+	MandaRespuestaAServer();
 	printf("Que archivo quieres eliminar? \n\r");
-	scanf("%s", CurrentFileName);
+	
+	//scanf("%s", CurrentFileName);
+	read(SD, CurrentFileName, sizeof(CurrentFileName));
+	
 	TamanoDePalabraABuscar = SizeofTheArray(CurrentFileName);
 	printf("El tamano es: %i  \n\r", TamanoDePalabraABuscar);
 	do
@@ -393,8 +415,10 @@ void PrintDirectory(void)
 void CreateNewDir(void)
 {
 	int InodeUsed = 0;
+	MandaRespuestaAServer();
 	printf("Ingresa el nombre del nuevo directorio \n\r");
-	scanf("%s", CurrentFileName);
+	read(SD, CurrentFileName, sizeof(CurrentFileName));
+	//scanf("%s", CurrentFileName);
 	InodeUsed = FillInode ((int)1, Directory);
 	WriteInDirectory(InodeUsed);
 	AsignarBloquesLibres(0,0,0,Directory);
@@ -445,18 +469,22 @@ int TamanoVariable;
 float NumeroDeBloquesANecesitar =0;
 int InodeUsed;
 
+MandaRespuestaAServer();
 printf("Ingresa el texto que quieres que contenga el archivo \n\r");
-scanf("%s", Textoescrito);
+read(SD, Textoescrito, sizeof(Textoescrito));
+//scanf("%s", Textoescrito);
 //gets(Textoescrito);
 TamanoVariable = SizeofTheArray(Textoescrito);
 printf("Este es tu texto: %s y el tamaño es: %i \n\r", Textoescrito, TamanoVariable);
 NumeroDeBloquesANecesitar = (((float)TamanoVariable)/1024)+1;
 printf(" Voy a necesitar %i bloques para este archivo \n\r", (int)NumeroDeBloquesANecesitar);
 
+MandaRespuestaAServer();
 printf("Ingresa el nombre del archivo \n\r");
-scanf("%s", CurrentFileName);
+read(SD, CurrentFileName, sizeof(CurrentFileName));
+//scanf("%s", CurrentFileName);
 
-AsignarBloquesLibres(NumeroDeBloquesANecesitar, Textoescrito, TamanoVariable, TextFile);
+AsignarBloquesLibres(0, 0, 0, Directory);
 InodeUsed = FillInode (NumeroDeBloquesANecesitar, TextFile);
 WriteInDirectory(InodeUsed);
 
@@ -520,21 +548,24 @@ return InodeUsed;
 
 
 
-void AsignarBloquesLibres(int NumBloques, char Textoescrito[1000], int TamanoVariable, int TipoDeArchivo)
+void AsignarBloquesLibres(int NumBloques, char Textoescrito[10000], int TamanoVariable, int TipoDeArchivo)
 {
 int WriteOnBlock;
 int CharTrans;
 int SecondCharTrans;
-//printf("Este es tu texto: %s \n\r", Textoescrito);
+printf("Este es tu texto: %s \n\r", Textoescrito);
 //printf("", LBL[CurrentLBLPos]);
 //printf("Estos son los bloques que se usaron %i \n\r", LBL[CurrentLBLPos-WriteOnBlock]);
-if(TipoDeArchivo == TextFile)
+if(TipoDeArchivo == (int)TextFile)
 {
-	BlocksUsed[0]=LBL[CurrentLBLPos-WriteOnBlock];
+	printf("HOLA 1");
+	//BlocksUsed[0]=LBL[CurrentLBLPos-WriteOnBlock];
+	printf("HOLA 2");
 	for(WriteOnBlock = 0; WriteOnBlock < NumBloques; WriteOnBlock++)
 	{
+		printf("HOLA 3");
 	BlocksUsed[WriteOnBlock]=LBL[CurrentLBLPos-WriteOnBlock];
-
+printf("HOLA NENE");
 	/*Quemar un bloque libre*/
 	LBL[CurrentLBLPos-WriteOnBlock] = 0;
 	do
