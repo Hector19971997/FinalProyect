@@ -77,15 +77,11 @@ do
 	}
 	else if(Buff[0] == EscribirAServidor)
 	{
-		//NumeroDeVecesAEscribir = Buff[1];
-		//do{
-		//printf("Ingresa el usuario por favor %i", NumeroDeVecesAEscribir);
+
 		scanf("%s",Buff);
-		//printf("Mandare: %s", Buff);
 		write(C, Buff, sizeof(Buff));
 		Buff[0] = LeerServidor;
 		NumeroDeVecesAEscribir--;
-		//}while(NumeroDeVecesAEscribir != 0);
 		Buff[0] = LeerServidor;
 	}
 	else if(Buff[0] == TerminarConexion)
@@ -101,8 +97,6 @@ do
 	
 }while( Buff[0]!= 0xFF );
 
-
-//write(C, Buff, sizeof(Buff));
 close (C);
 
 }
