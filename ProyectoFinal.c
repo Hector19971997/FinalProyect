@@ -483,7 +483,7 @@ printf("Ingresa el nombre del archivo \n\r");
 read(SD, CurrentFileName, sizeof(CurrentFileName));
 //scanf("%s", CurrentFileName);
 
-AsignarBloquesLibres(0, 0, 0, Directory);
+AsignarBloquesLibres(NumeroDeBloquesANecesitar, Textoescrito, tamanoVariable, TextFile);
 InodeUsed = FillInode (NumeroDeBloquesANecesitar, TextFile);
 WriteInDirectory(InodeUsed);
 
