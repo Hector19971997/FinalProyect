@@ -148,16 +148,16 @@ write(fd,data,sizeof(data));*/
 createRootDirectory();
 system("clear");
 memset(Buff,0, sizeof(Buff));
+
 printf("Hola Cual es tu nombre %i \n", Buff[0]);
-do{
-	read(SD, Buff, sizeof(Buff));
-}while(Buff[0] == 0);
-//scanf("%s", username);
+read(SD, Buff, sizeof(Buff));
+
 printf("Bienvenido al sistema %s \n\n",Buff);
 
 /*Llenar la lista de los inodos libres*/
 CurrentLILpos = FillFreeInodeList();
-
+memset(Buff,0, sizeof(Buff));
+write(SD, Buff, sizeof(Buff));
 
 do{
 PrintLIL();
